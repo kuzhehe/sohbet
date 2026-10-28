@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sohbet</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#efeae2;--surf:#fff;--text:#111b21;--muted:#667781;--out:#d9fdd3;--in:#fff;--line:#e9edef;--tick:#34b7f1}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0b141a;--surf:#111b21;--text:#e9edef;--muted:#8696a0;--out:#005c4b;--in:#202c33;--line:#222d34}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#0b141a;--surf:#111b21;--text:#e9edef;--muted:#8696a0;--out:#005c4b;--in:#202c33;--line:#222d34}
+html,body{height:100%;margin:0}
+body{background:var(--surf);color:var(--text);font:16px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+#app{max-width:480px;height:100%;margin:0 auto;position:relative;background:var(--surf);overflow:hidden}
+.screen{display:none;position:absolute;inset:0;flex-direction:column}
+.screen.on{display:flex}
+header{background:#128c7e;color:#fff;padding:12px 14px;display:flex;align-items:center;gap:10px;font-weight:600}
+.grow{flex:1;min-width:0}
+header small{display:block;font-weight:400;font-size:12px;opacity:.9}
+button,input,select{font:inherit}
+.ib{background:none;border:0;color:inherit;font-size:20px;padding:4px 8px;cursor:pointer}
+.center{padding:34px 24px;display:flex;flex-direction:column;gap:12px;text-align:center}
+.center p{color:var(--muted);margin:0}
+input.f{padding:11px;border:1px solid var(--line);border-radius:10px;background:var(--surf);color:var(--text);min-width:0}
+.btn{background:#128c7e;color:#fff;border:0;border-radius:22px;padding:11px 18px;font-weight:600;cursor:pointer}
+.btn.sm{padding:6px 14px;font-size:14px}.btn.ghost{background:none;color:#128c7e;border:1px solid #128c7e}
+.list{flex:1;overflow:auto}
+.row{display:flex;gap:12px;padding:11px 16px;align-items:center;cursor:pointer}
+.row:active{background:var(--line)}
+.av{width:46px;height:46px;border-radius:50%;background:#6b7c85;color:#fff;display:grid;place-items:center;font-weight:700;flex:none;position:relative}
+.av.on::after{content:"";position:absolute;right:0;bottom:0;width:12px;height:12px;border-radius:50%;background:#25d366;border:2px solid var(--surf)}
+.mid{flex:1;min-width:0;border-bottom:1px solid var(--line);padding-bottom:10px}
+.top{display:flex;justify-content:space-between;gap:8px}.top span{font-size:12px;color:var(--muted)}
+.sub{color:var(--muted);font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.badge{background:#25d366;color:#fff;border-radius:11px;min-width:20px;padding:0 6px;text-align:center;font-size:12px}
+.sec{padding:10px 16px;font-size:13px;color:#128c7e;font-weight:700}
+.empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--muted);text-align:center;padding:30px}
+.empty b{font-size:18px;color:var(--text)}
+.fab{position:absolute;right:18px;bottom:calc(18px + env(safe-area-inset-bottom,0px));width:56px;height:56px;border-radius:16px;border:0;background:#25d366;color:#fff;font-size:26px;box-shadow:0 3px 8px rgba(0,0,0,.3);cursor:pointer}
+.add{display:flex;gap:6px;padding:10px 12px;border-bottom:1px solid var(--line)}.add input{flex:1}
+#msgs{flex:1;overflow:auto;padding:10px;display:flex;flex-direction:column;gap:5px;background:var(--bg)}
+.b{max-width:80%;padding:6px 9px;border-radius:10px;background:var(--in);color:var(--text);box-shadow:0 1px 1px rgba(0,0,0,.13);align-self:flex-start;word-wrap:break-word;cursor:pointer}
+.b.out{background:var(--out);align-self:flex-end}
+.b img{display:block;max-width:100%;border-radius:8px;margin-bottom:4px}
+.b a{color:inherit;font-weight:600}
+.meta{font-size:11px;color:var(--muted);text-align:right}.read{color:var(--tick)}
+.bar{display:flex;gap:6px;padding:8px;background:var(--surf);align-items:center}
+.bar input[type=text]{flex:1;padding:10px 14px;border-radius:22px;border:0;background:var(--line);color:var(--text);min-width:0}
+.bar button{background:none;border:0;font-size:22px;cursor:pointer;color:var(--text)}
+.bar .send{background:#128c7e;color:#fff;border-radius:50%;width:42px;height:42px;font-size:18px}
+#emo{display:none;flex-wrap:wrap;gap:4px;padding:8px;background:var(--surf)}#emo button{background:none;border:0;font-size:24px}
+#sheet{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:8;align-items:flex-end;justify-content:center}
+#sheet>div{background:var(--surf);width:100%;max-width:480px;border-radius:16px 16px 0 0;padding:8px 0 calc(8px + env(safe-area-inset-bottom,0px))}
+#sheet h4{margin:8px 16px;color:var(--muted);font-weight:600}
+#sheet button{display:block;width:100%;text-align:left;background:none;border:0;padding:14px 18px;color:var(--text);cursor:pointer}
+#sheet button.red{color:#e53935}
+#toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#222;color:#fff;padding:9px 16px;border-radius:20px;font-size:14px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:9;max-width:90%;text-align:center}
+#toast.show{opacity:1}
+#net{display:none;position:fixed;top:0;left:0;right:0;background:#e53935;color:#fff;text-align:center;font-size:13px;padding:3px;z-index:9}
+</style>
+</head>
+<body>
+<div id="net">Sunucuya bağlanılamıyor, yeniden deneniyor…</div>
+<div id="app">
+
+<section class="screen on" id="s-login"><div class="center">
+  <div class="av" style="margin:24px auto 0;width:76px;height:76px;background:#128c7e;font-size:34px">💬</div>
+  <h1 style="margin:6px 0 0">Sohbet’e hoş geldin</h1>
+  <p>Ülke koduyla numaranı gir (örn. 905321234567).</p>
+  <input class="f" id="tel" type="tel" placeholder="90 5XX XXX XX XX">
+  <input class="f" id="srv" placeholder="Sunucu (örn. 192.168.1.20:8080)" style="font-size:14px">
+  <button class="btn" id="go">Devam</button>
+  <p style="font-size:12px">Test şifresi: 1234 (SMS gitmez)</p>
+</div></section>
+
+<section class="screen" id="s-otp"><div class="center">
+  <h1 style="margin:20px 0 0">Şifreyi gir</h1>
+  <input class="f" id="otp" inputmode="numeric" maxlength="4" placeholder="----" style="text-align:center">
+  <button class="btn" id="ver">Doğrula</button>
+  <p id="otpe" style="color:#d33"></p>
+</div></section>
+
+<section class="screen" id="s-list">
+  <header><span class="grow" style="font-size:20px">Sohbet</span><button class="ib" id="out" title="Çıkış">⏻</button></header>
+  <div class="list" id="chats"></div>
+  <div class="empty" id="emptyChats"><div style="font-size:54px">💬</div><b>Henüz kimseyle konuşmadın</b><span>Bir kişi ekle, kayıtlıysa hemen yaz, değilse davet et.</span></div>
+  <button class="fab" id="fab">✉</button>
+</section>
+
+<section class="screen" id="s-new">
+  <header><button class="ib" id="nb">←</button><div class="grow">Kişiler</div><button class="ib" id="pick" title="Rehberden ekle">⇪</button></header>
+  <div class="add"><input class="f" id="an" placeholder="Ad"><input class="f" id="at" type="tel" placeholder="Numara"><button class="btn sm" id="ad">Ekle</button></div>
+  <div class="list" id="people"></div>
+</section>
+
+<section class="screen" id="s-chat">
+  <header><button class="ib" id="bk">←</button><div class="av" id="cav" style="width:38px;height:38px"></div><div class="grow"><div id="cn"></div><small id="cs"></small></div><button class="ib" id="menu">⋮</button></header>
+  <div id="msgs"></div>
+  <div id="emo"></div>
+  <div class="bar"><button id="eb">😊</button><button id="att">📎</button><input type="text" id="inp" placeholder="Mesaj yaz"><button class="send" id="snd">➤</button></div>
+  <input type="file" id="file" hidden>
+</section>
+</div>
+<div id="sheet"><div id="sheetBox"></div></div>
+<div id="toast"></div>
+
+<script>
+var $=function(i){return document.getElementById(i)};
+function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+function hm(t){var d=new Date(t||Date.now());return("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2)}
+function ls(k,v){try{if(v===undefined)return localStorage.getItem(k);if(v===null)localStorage.removeItem(k);else localStorage.setItem(k,v)}catch(e){}}
+function toast(t){var x=$("toast");x.textContent=t;x.classList.add("show");clearTimeout(toast.t);toast.t=setTimeout(function(){x.classList.remove("show")},2600)}
+function show(id){document.querySelectorAll(".screen").forEach(function(s){s.classList.remove("on")});$("s-"+id).classList.add("on")}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
+var EXP={"0":"Kapalı","seen":"Okunduktan sonra (5 sn)","86400000":"24 saat","604800000":"7 gün","2592000000":"30 gün"};
+// YAYINA ALIRKEN: sunucunu buluta koyunca adresini buraya yaz (örn. "sohbet-abc.onrender.com"). Kullanıcı hiçbir adres girmez.
+var SERVER="";
+var ME=ls("sohbet_me")||"",S=null,cur=null,ws=null;
+
+function load(){var r=ls("sohbet_d_"+ME);S=r?JSON.parse(r):{contacts:[],chats:{}}}
+function save(){if(!S)return;try{localStorage.setItem("sohbet_d_"+ME,JSON.stringify(S))}catch(e){toast("Kayıt alanı doldu")}}
+function ct(t){return S.contacts.filter(function(c){return c.tel===t})[0]}
+function addC(t,n){var c=ct(t);if(!c){c={tel:t,n:n||t,reg:0,on:0,seen:0};S.contacts.push(c)}return c}
+function msgs(t){return S.chats[t]||(S.chats[t]=[])}
+function lastMsg(t){var a=S.chats[t]||[];return a[a.length-1]}
+function unread(t){return msgs(t).filter(function(m){return !m.o&&!m.rd}).length}
+
+/* sunucu bağlantısı */
+function wsend(o){if(ws&&ws.readyState===1){ws.send(JSON.stringify(o));return true}toast("Sunucuya bağlı değilsin");return false}
+function connect(){
+ var u=SERVER||$("srv").value.trim()||ls("sohbet_srv")||location.host;
+ if(!u){toast("Sunucu adresini yaz");return}
+ ls("sohbet_srv",u);
+ ws=new WebSocket((/^wss?:\/\//.test(u)?"":((SERVER||location.protocol==="https:")?"wss://":"ws://"))+u);
+ ws.onopen=function(){$("net").style.display="none";ws.send(JSON.stringify({t:"login",tel:ME}))};
+ ws.onmessage=function(e){handle(JSON.parse(e.data))};
+ ws.onclose=function(){if(ME){$("net").style.display="block";setTimeout(connect,2500)}};
+}
+function lookup(){if(S.contacts.length)wsend({t:"lookup",tels:S.contacts.map(function(c){return c.tel})})}
+function handle(m){
+ if(m.t==="ready"){var s=document.querySelector(".screen.on").id;if(s==="s-login"||s==="s-otp"){renderList();show("list")}
+  lookup();S.contacts.forEach(function(c){if(c.blocked)wsend({t:"block",tel:c.tel,on:true})})}
+ else if(m.t==="lookup"||m.t==="pres"){(m.list||[m]).forEach(function(i){var c=ct(i.tel);if(c){c.reg=i.reg?1:0;c.on=i.on?1:0;c.seen=i.seen}});save();redraw()}
+ else if(m.t==="msg"){var c=addC(m.from);if(c.blocked)return;c.reg=1;
+  var x={id:m.id,o:0,t:m.text,img:m.img,file:m.file,h:hm(m.ts),ts:m.ts,exp:m.exp||"0"};msgs(m.from).push(x);
+  if(cur&&cur.tel===m.from)markRead(c);save();redraw()}
+ else if(m.t==="ack"){msgs(m.to).forEach(function(x){if(x.id===m.id&&x.s<m.s)x.s=m.s});save();redraw()}
+ else if(m.t==="read"){msgs(m.from).forEach(function(x){if(x.o&&m.ids.indexOf(x.id)>-1){x.s=3;x.seenAt=Date.now()}});save();redraw()}
+ else if(m.t==="del"){S.chats[m.from]=msgs(m.from).filter(function(x){return x.id!==m.id});save();redraw()}
+ else if(m.t==="err")toast(m.e)}
+function redraw(){renderList();if($("s-new").classList.contains("on"))renderNew();if(cur){status();renderMsgs()}}
+
+/* giriş */
+$("srv").value=ls("sohbet_srv")||(location.port==="8000"?location.hostname+":8001":location.host)||"";
+if(SERVER||(location.host&&location.protocol!=="file:"))$("srv").style.display="none";
+$("go").onclick=function(){var v=$("tel").value.replace(/\D/g,"");if(v.length<8){toast("Numarayı ülke koduyla yaz");return}ME=v;show("otp")};
+$("ver").onclick=function(){if($("otp").value==="1234"){ls("sohbet_me",ME);load();connect()}else $("otpe").textContent="Şifre hatalı (test şifresi 1234)"};
+$("out").onclick=function(){ls("sohbet_me",null);ME="";location.reload()};
+
+/* sohbet listesi: sadece mesajlaşılanlar */
+function renderList(){
+ var L=$("chats");L.innerHTML="";
+ var ids=Object.keys(S.chats).filter(function(t){return S.chats[t].length&&ct(t)});
+ ids.sort(function(a,b){return lastMsg(b).ts-lastMsg(a).ts});
+ $("emptyChats").style.display=ids.length?"none":"flex";
+ ids.forEach(function(t){var c=ct(t),m=lastMsg(t),u=unread(t),r=el("div","row"),mid=el("div","mid"),tp=el("div","top");
+  tp.appendChild(el("b",null,c.n));tp.appendChild(el("span",null,m.h));mid.appendChild(tp);
+  var sb=el("div","top");sb.appendChild(el("div","sub",(c.blocked?"⛔ ":c.restricted?"🔇 ":"")+(m.o?"Sen: ":"")+(m.img?"📷 Fotoğraf":m.file?"📄 "+m.file.name:m.t)));
+  if(u)sb.appendChild(el("div","badge",u));mid.appendChild(sb);
+  r.appendChild(el("div","av"+(c.on?" on":""),c.n[0].toUpperCase()));r.appendChild(mid);r.onclick=function(){openChat(t)};L.appendChild(r)})}
+$("fab").onclick=function(){lookup();renderNew();show("new")};
+$("nb").onclick=function(){renderList();show("list")};
+
+/* kişiler: kayıtlılar yazılır, olmayanlar davet edilir */
+function renderNew(){
+ var P=$("people");P.innerHTML="";
+ var R=S.contacts.filter(function(c){return c.reg}),N=S.contacts.filter(function(c){return !c.reg});
+ if(!S.contacts.length)P.appendChild(el("div","empty","Yukarıdan ad ve numara girerek kişi ekle."));
+ if(R.length){P.appendChild(el("div","sec","Sohbet’te olan kişiler"));R.forEach(function(c){
+  var r=el("div","row"),mid=el("div","mid");mid.appendChild(el("b",null,c.n));mid.appendChild(el("div","sub",c.on?"çevrimiçi":"son görülme "+fmtSeen(c.seen)));
+  r.appendChild(el("div","av"+(c.on?" on":""),c.n[0].toUpperCase()));r.appendChild(mid);r.onclick=function(){openChat(c.tel)};P.appendChild(r)})}
+ if(N.length){P.appendChild(el("div","sec","Sohbet’e davet et"));N.forEach(function(c){
+  var r=el("div","row"),mid=el("div","mid"),b=el("button","btn sm"+(c.inv?" ghost":""),c.inv?"Gönderildi":"Davet et");
+  mid.appendChild(el("b",null,c.n));mid.appendChild(el("div","sub",c.tel));b.onclick=function(){invite(c)};
+  r.appendChild(el("div","av",c.n[0].toUpperCase()));r.appendChild(mid);r.appendChild(b);P.appendChild(r)})}}
+function fmtSeen(t){return t?new Date(t).toLocaleString("tr-TR",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}):"yakın zamanda"}
+$("ad").onclick=function(){var t=$("at").value.replace(/\D/g,""),n=$("an").value.trim();
+ if(t.length<8){toast("Numarayı ülke koduyla yaz");return}if(t===ME){toast("Bu senin numaran");return}
+ addC(t,n||t);$("an").value=$("at").value="";save();lookup();renderNew()};
+function invite(c){var txt="Merhaba "+c.n+", Sohbet uygulamasına gel, numaramla bana yaz: "+location.href;c.inv=1;save();renderNew();
+ if(navigator.share)navigator.share({text:txt}).catch(function(){});
+ else if(navigator.clipboard)navigator.clipboard.writeText(txt).then(function(){toast("Davet metni kopyalandı")});else toast("Davet hazır")}
+$("pick").onclick=function(){
+ if(!("contacts" in navigator)||!navigator.contacts.select){toast("Bu tarayıcı rehbere erişemiyor, numarayı elle ekle");return}
+ navigator.contacts.select(["name","tel"],{multiple:true}).then(function(r){
+  r.forEach(function(p){var t=((p.tel&&p.tel[0])||"").replace(/\D/g,"");if(t.length>=8&&t!==ME)addC(t,(p.name&&p.name[0])||t)});
+  save();lookup();renderNew()}).catch(function(){})};
+
+/* sohbet ekranı */
+function status(){var c=cur;$("cs").textContent=c.blocked?"engelledin":!c.reg?"Sohbet’te değil":c.on?"çevrimiçi":"son görülme "+fmtSeen(c.seen)}
+function markRead(c){var ids=[];msgs(c.tel).forEach(function(m){if(!m.o&&!m.rd){m.rd=1;m.seenAt=Date.now();ids.push(m.id)}});
+ if(ids.length&&!c.restricted)wsend({t:"read",to:c.tel,ids:ids})}
+function openChat(t){cur=ct(t);$("cn").textContent=cur.n;$("cav").textContent=cur.n[0].toUpperCase();markRead(cur);save();status();renderMsgs();show("chat")}
+$("bk").onclick=function(){cur=null;renderList();show("list")};
+function renderMsgs(){
+ var B=$("msgs");B.innerHTML="";
+ msgs(cur.tel).forEach(function(m){
+  var b=el("div","b"+(m.o?" out":""));
+  if(m.img){var im=el("img");im.src=m.img;b.appendChild(im)}
+  if(m.file){var a=el("a",null,"📄 "+m.file.name+" ("+Math.round(m.file.size/1024)+" KB)");a.href=m.file.data;a.download=m.file.name;a.onclick=function(e){e.stopPropagation()};b.appendChild(a)}
+  if(m.t)b.appendChild(el("div",null,m.t));
+  var mt=el("div","meta",(m.exp&&m.exp!=="0"?"⏳ ":"")+m.h+" ");
+  if(m.o)mt.appendChild(el("span",m.s===3?"read":"",m.s===1?"✓":"✓✓"));
+  b.appendChild(mt);b.onclick=function(){msgSheet(m)};B.appendChild(b)});
+ B.scrollTop=B.scrollHeight}
+function send(m){
+ var c=cur;if(c.blocked){toast("Kişiyi engelledin, önce engeli kaldır");return}
+ if(!c.reg){toast("Bu kişi henüz Sohbet’te değil, davet et");return}
+ m.id=uid();m.o=1;m.h=hm();m.ts=Date.now();m.s=1;m.exp=c.exp||"0";
+ if(!wsend({t:"msg",to:c.tel,id:m.id,text:m.t,img:m.img,file:m.file,exp:m.exp}))return;
+ msgs(c.tel).push(m);save();renderMsgs();renderList()}
+function sendText(){var v=$("inp").value.trim();if(!v)return;$("inp").value="";$("emo").style.display="none";send({t:v})}
+$("snd").onclick=sendText;$("inp").onkeydown=function(e){if(e.key==="Enter")sendText()};
+["😀","😂","😍","👍","🙏","🎉","😢","🔥","❤️","😎","🤔","👋"].forEach(function(x){var b=el("button",null,x);b.onclick=function(){$("inp").value+=x;$("inp").focus()};$("emo").appendChild(b)});
+$("eb").onclick=function(){var e=$("emo");e.style.display=e.style.display==="flex"?"none":"flex"};
+
+/* dosya ve resim: resim cihazda sıkıştırılır, diğer dosyalar olduğu gibi gider (en fazla 8 MB) */
+$("att").onclick=function(){$("file").click()};
+$("file").onchange=function(){var f=this.files[0];this.value="";if(!f)return;
+ if(f.size>8e6){toast("Dosya 8 MB sınırını aşıyor");return}
+ if(/^image\//.test(f.type)){var img=new Image(),u=URL.createObjectURL(f);
+  img.onload=function(){var k=Math.min(1,720/Math.max(img.width,img.height)),cv=document.createElement("canvas");
+   cv.width=img.width*k;cv.height=img.height*k;cv.getContext("2d").drawImage(img,0,0,cv.width,cv.height);URL.revokeObjectURL(u);send({img:cv.toDataURL("image/jpeg",.7)})};
+  img.src=u}
+ else{var r=new FileReader();r.onload=function(){send({file:{name:f.name,size:f.size,data:r.result}})};r.readAsDataURL(f)}};
+
+/* menüler: kaybolan mesaj, engelle, kısıtla, sil */
+function sheet(title,items){var b=$("sheetBox");b.innerHTML="";b.appendChild(el("h4",null,title));
+ items.forEach(function(i){var x=el("button",i.red?"red":"",i.l);x.onclick=function(){$("sheet").style.display="none";i.f&&i.f()};b.appendChild(x)});
+ var cl=el("button",null,"Vazgeç");cl.onclick=function(){$("sheet").style.display="none"};b.appendChild(cl);$("sheet").style.display="flex"}
+$("sheet").onclick=function(e){if(e.target===this)this.style.display="none"};
+$("menu").onclick=function(){var c=cur;sheet(c.n,[
+ {l:"⏳ Kaybolan mesajlar: "+EXP[c.exp||"0"],f:expSheet},
+ {l:c.blocked?"Engeli kaldır":"Engelle",f:function(){c.blocked=!c.blocked;wsend({t:"block",tel:c.tel,on:!!c.blocked});save();status();toast(c.blocked?"Kişi engellendi":"Engel kaldırıldı")}},
+ {l:c.restricted?"Kısıtlamayı kaldır":"Kısıtla (okundu bilgisi gitmez)",f:function(){c.restricted=!c.restricted;save();toast(c.restricted?"Kişi kısıtlandı":"Kısıtlama kaldırıldı")}},
+ {l:"Sohbeti temizle",red:1,f:function(){S.chats[c.tel]=[];save();renderMsgs();renderList()}},
+ {l:"Kişiyi sil",red:1,f:function(){S.contacts=S.contacts.filter(function(x){return x!==c});delete S.chats[c.tel];cur=null;save();renderList();show("list")}}])};
+function expSheet(){var c=cur;sheet("Yeni mesajlar kaybolsun",Object.keys(EXP).map(function(k){return{l:(((c.exp||"0")===k)?"● ":"○ ")+EXP[k],f:function(){c.exp=k;save();toast("Bu kişi için: "+EXP[k])}}}))}
+function msgSheet(m){var c=cur,it=[{l:"Benden sil",f:function(){S.chats[c.tel]=msgs(c.tel).filter(function(x){return x!==m});save();renderMsgs();renderList()}}];
+ if(m.o)it.push({l:"Herkesten sil",red:1,f:function(){wsend({t:"del",to:c.tel,id:m.id});S.chats[c.tel]=msgs(c.tel).filter(function(x){return x!==m});save();renderMsgs();renderList()}});
+ sheet("Mesaj",it)}
+
+/* kaybolan mesajları temizle */
+setInterval(function(){if(!S)return;var n=Date.now(),ch=0;
+ Object.keys(S.chats).forEach(function(k){var a=S.chats[k],b=a.filter(function(m){var e=m.exp;if(!e||e==="0")return 1;if(e==="seen")return !(m.seenAt&&n>m.seenAt+5000);return n<m.ts+Number(e)});
+  if(b.length!==a.length){S.chats[k]=b;ch=1}});
+ if(ch){save();redraw()}},2000);
+
+if(ME&&ls("sohbet_srv")||ME&&location.host){load();connect()}
+</script>
+</body>
+</html>
